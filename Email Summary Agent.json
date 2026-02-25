@@ -1,0 +1,212 @@
+{
+  "name": "Email Summary Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -624,
+        -32
+      ],
+      "id": "25eb4540-0f5f-4128-b10c-5ffee12261a5",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 10,
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -416,
+        -32
+      ],
+      "id": "82b7cf1f-3073-4ef1-bdcd-0088126a13b0",
+      "name": "Get many messages",
+      "webhookId": "b4015d09-7e72-4128-b129-bf425b72f2b8",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ulxoeLJskYhMHL7h",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "snippet"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        -32
+      ],
+      "id": "b7163e3d-e23a-4ae7-b319-505ccf749433",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-exp",
+        "options": {
+          "maxOutputTokens": 2048,
+          "temperature": 0.4,
+          "topK": 32,
+          "topP": 1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        176
+      ],
+      "id": "f5668fe1-cbe4-474a-990e-224719374261",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "FFKAy38ysZrQeECt",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.snippet[0] }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        -32
+      ],
+      "id": "ed34255f-6b90-4667-90df-a527c960de0d",
+      "name": "Email Summarizing AI Agent"
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "Email Summary",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        352,
+        -32
+      ],
+      "id": "8e890597-00a5-4a1f-8f20-2c88f091cad4",
+      "name": "Drafting all Summarized data",
+      "webhookId": "9090e4e6-8270-4207-8f38-cdbfa02314e1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ulxoeLJskYhMHL7h",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "This Project is to Summarize your past mails which you have received in past 24hrs",
+        "height": 80,
+        "width": 592
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -208,
+        -272
+      ],
+      "typeVersion": 1,
+      "id": "7ac09295-5463-47c8-be0d-fb08d383918d",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get many messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many messages": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Email Summarizing AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Summarizing AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Summarizing AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Drafting all Summarized data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "029f8829-abb6-489c-a4d3-e380d05a2b41",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2ff5d696971b167c377a1689738e309f85915dcd32a1f87520137c86aa459b33"
+  },
+  "id": "FWLtT0JzkvJ3yDfd",
+  "tags": []
+}
